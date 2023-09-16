@@ -1,3 +1,3 @@
-import data.robots.testrobot as testrobot
+from security.secureloader import SecureLoader
 
-testrobot.robot()
+SecureLoader.loadRobot("data/robots/testrobot.py")
