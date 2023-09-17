@@ -13,7 +13,7 @@ class JustImportIt:
     ULTRA_UNSAFE = 3 # Recursive-automatic dependancy resolution
 
     @classmethod
-    def resolve(self, mode: int = 0) -> None:
+    def resolve(self, mode: int = 0, deps: list[tuple[str, str]] or str = None) -> None:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         if exc_type is not ImportError: return
 
@@ -37,7 +37,7 @@ class JustImportIt:
             for thing in things:
                 try:
                     # results.append(self.getClass(package, thing))
-                    results[thing] = JustImportIt.getClass(package, thing)
+                    results[thing] = JustImportIt.getClass(package, thing, deps)
                 except Exception as e:
                     if mode == self.DIRTY:
                         raise e
@@ -46,7 +46,7 @@ class JustImportIt:
             
             # get the caller's globals
             if any([result is None for result in results.values()]):
-                raise ImportError(f"Failed to import {things} from {target}")
+                raise ImportError(f"Failed to import {things} from {target}, (do not trust this!!!)")
             caller_globs = inspect.currentframe().f_back.f_globals
             caller_globs.update(results)
 

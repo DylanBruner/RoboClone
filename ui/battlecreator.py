@@ -20,6 +20,7 @@ class RobotPackage:
         return self.package_name
 
 class BattleCreator:
+    SELECTED_ROBOTS_ITEMS = []
     def __init__(self, root: tk.Tk = None):
         self.root = tk.Tk() if root is None else root
         self.root.title("New Battle")
@@ -93,6 +94,7 @@ class BattleCreator:
         self.selected_robots_list = tk.Listbox(selected_robots_frame, selectmode=tk.SINGLE, exportselection=True)
         self.selected_robots_list.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
+
         selected_robots_frame.grid_rowconfigure(0, weight=1)
         selected_robots_frame.grid_columnconfigure(0, weight=1)
 
@@ -165,13 +167,28 @@ class BattleCreator:
         self.selected_robots_list.delete(0, tk.END)
 
     def start_battle(self):
-        BattleField.setupNewBattle(self.selected_robots_list.get(0, tk.END))
+        robots: list[Robot] = []
+        for i in range(self.selected_robots_list.size()):
+            for package in self.robots_package_data:
+                for robot in package.robots:
+                    if robot.robot_name == self.selected_robots_list.get(i):
+                        robots.append(robot)
+                        break
+        
+        # add all selected robots to SELECTED_ROBOTS_ITEMS
+        BattleCreator.SELECTED_ROBOTS_ITEMS = []
+        for robot in self.selected_robots_list.get(0, tk.END):
+            BattleCreator.SELECTED_ROBOTS_ITEMS.append(robot)
+            
+        BattleField.setupNewBattle(robots)
         self.root.destroy()
 
     def populate_robot_data(self, data: list[RobotPackage]) -> None:
         self.robots_package_data = data
         for package in data:
             self.packages_list.insert(tk.END, package)
+        for item in BattleCreator.SELECTED_ROBOTS_ITEMS:
+            self.selected_robots_list.insert(tk.END, item)
 
 
 if __name__ == "__main__":

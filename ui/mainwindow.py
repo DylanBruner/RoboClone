@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from ui.battle.battlefield import BattleField
 from ui.battle.battleview import BattleView
@@ -122,11 +123,19 @@ class MainWindow:
         self.root.config(menu=menubar)
 
     def newBattle(self) -> None:
-        BattleCreator(tk.Toplevel(self.root)).populate_robot_data([
-            RobotPackage("Package 1", [Robot("Robot 1", "file1"), Robot("Robot 2", "file2")]),
-            RobotPackage("Package 2", [Robot("Robot 3", "file3"), Robot("Robot 4", "file4")]),
-            RobotPackage("Package 3", [Robot("Robot 5", "file5"), Robot("Robot 6", "file6")]),
-        ])
+        packages = []
+        for root, dirs, files in os.walk("data/robots"):
+            for file in files:
+                if file.endswith(".py"):
+                    package_exists = False
+                    for package in packages:
+                        if package.package_name == root.split("\\")[-1]:
+                            package_exists = True
+                            package.robots.append(Robot(file.split(".")[0], os.path.join(root, file)))
+                            break
+                    if not package_exists:
+                        packages.append(RobotPackage(root.split("\\")[-1], [Robot(file.split(".")[0], os.path.join(root, file))]))
+        BattleCreator(tk.Toplevel(self.root)).populate_robot_data(packages)
 
     def openBattle(self) -> None: ...
     def saveBattle(self) -> None: ...
@@ -149,10 +158,11 @@ class MainWindow:
     def recalculateCPUConstant(self) -> None: ...
     def cleanRobotCache(self) -> None: ...
 
-    def pauseBattle(self) -> None: ...
+    def pauseBattle(self) -> None: BattleField.pauseBattle()
     def nextTurn(self) -> None: ...
-    def stopBattle(self) -> None: ...
-    def restartBattle(self) -> None: ...
+    def stopBattle(self) -> None: BattleField.stopBattle()
+
+    def restartBattle(self) -> None: BattleField.restartBattle()
     def sliderChange(self, value: int) -> None: ...
 
     def onWindowClose(self):

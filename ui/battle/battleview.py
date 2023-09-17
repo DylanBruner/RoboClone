@@ -10,15 +10,16 @@ class BattleView:
     IMAGE_DUMP: dict = GarbageFix(5)
     GROUND_TILES = [Image.open(f"images/ground/blue_metal/blue_metal_{i}.png") for i in range(0, 4)]
     GROUND_TILE_WIDTH: int = GROUND_TILES[0].width
+    CANVAS: Canvas = None
 
     def __init__(self, canvas: Canvas, battleField: BattleField):
-        self.canvas = canvas
+        self.CANVAS = BattleField.CANVAS = canvas
         self.battleField = battleField
         self.groundImage = self.createGroundImage()
         self.idleImage   = self.createIdleImage()
 
-        self.groundImageID = self.canvas.create_image(0, 0, image=self.groundImage, anchor="nw")
-        self.idleImageID   = self.canvas.create_image(0, 0, image=self.idleImage, anchor="nw")
+        self.groundImageID = self.CANVAS.create_image(0, 0, image=self.groundImage, anchor="nw")
+        self.idleImageID   = self.CANVAS.create_image(0, 0, image=self.idleImage, anchor="nw")
 
         self.running = True
         # self.mainThread = StoppableThread(target=self.mainloop)
@@ -84,44 +85,54 @@ class BattleView:
 
 
 
-            self.IMAGE_DUMP['body'] = ImageTk.PhotoImage(body_image)
-            self.IMAGE_DUMP['turret'] = ImageTk.PhotoImage(turret_image)
-            self.IMAGE_DUMP['radar'] = ImageTk.PhotoImage(radar_image)
+            self.IMAGE_DUMP[f'body-{robot._myID}'] = ImageTk.PhotoImage(body_image)
+            self.IMAGE_DUMP[f'turret-{robot._myID}'] = ImageTk.PhotoImage(turret_image)
+            self.IMAGE_DUMP[f'radar-{robot._myID}'] = ImageTk.PhotoImage(radar_image)
 
             robot.setParts(
                 [
-                    self.canvas.create_image(x, y, image=self.IMAGE_DUMP['body'], anchor="nw"),
-                    self.canvas.create_image(x, y, image=self.IMAGE_DUMP['turret'], anchor="nw"),
-                    self.canvas.create_image(x, y, image=self.IMAGE_DUMP['radar'], anchor="nw")
+                    self.CANVAS.create_image(x, y, image=self.IMAGE_DUMP[f'body-{robot._myID}'], anchor="nw"),
+                    self.CANVAS.create_image(x, y, image=self.IMAGE_DUMP[f'turret-{robot._myID}'], anchor="nw"),
+                    self.CANVAS.create_image(x, y, image=self.IMAGE_DUMP[f'radar-{robot._myID}'], anchor="nw")
                 ]
             )
 
         if robot.hasChanged() or forceRedraw:
             x, y = robot.getX(), robot.getY()
 
-            self.IMAGE_DUMP['body'] = ImageTk.PhotoImage(i1 := robot._images[0].rotate(robot.getRobotHeading()))
-            self.IMAGE_DUMP['turret'] = ImageTk.PhotoImage(i2 := robot._images[1].rotate(robot.getGunHeading()))
-            self.IMAGE_DUMP['radar'] = ImageTk.PhotoImage(i3 := robot._images[2].rotate(robot.getRadarHeading()))
+            self.IMAGE_DUMP[f'body-{robot._myID}'] = ImageTk.PhotoImage(i1 := robot._images[0].rotate(robot.getRobotHeading()))
+            self.IMAGE_DUMP[f'turret-{robot._myID}'] = ImageTk.PhotoImage(i2 := robot._images[1].rotate(robot.getGunHeading()))
+            self.IMAGE_DUMP[f'radar-{robot._myID}'] = ImageTk.PhotoImage(i3 := robot._images[2].rotate(robot.getRadarHeading()))
 
             # update the images
-            self.canvas.itemconfig(robot.getParts()[0], image=self.IMAGE_DUMP['body'])
-            self.canvas.itemconfig(robot.getParts()[1], image=self.IMAGE_DUMP['turret'])
-            self.canvas.itemconfig(robot.getParts()[2], image=self.IMAGE_DUMP['radar'])
+            self.CANVAS.itemconfig(robot.getParts()[0], image=self.IMAGE_DUMP[f'body-{robot._myID}'])
+            self.CANVAS.itemconfig(robot.getParts()[1], image=self.IMAGE_DUMP[f'turret-{robot._myID}'])
+            self.CANVAS.itemconfig(robot.getParts()[2], image=self.IMAGE_DUMP[f'radar-{robot._myID}'])
 
             # move all the parts to be centered on the robot
             i = 0
             for part in robot.getParts():
                 height, width = robot._images[i].height, robot._images[i].width
-                self.canvas.coords(part, x - width / 2, y - height / 2)
+                self.CANVAS.coords(part, x - width / 2, y - height / 2)
                 i += 1
 
     
     def mainloop(self) -> None:
         clock = Clock()
+        lastState = 0
         try:
             while self.running:
+                if self.battleField.getState() != lastState:
+                    lastState = self.battleField.getState()
+                    if lastState == 1:
+                        self.CANVAS.itemconfig(self.idleImageID, state="hidden")
+                        self.CANVAS.itemconfig(self.groundImageID, state="normal")
+                    elif lastState == 0:
+                        self.CANVAS.itemconfig(self.idleImageID, state="normal")
+                        self.CANVAS.itemconfig(self.groundImageID, state="hidden")
+
+
                 for robot in self.battleField.getRobots():
-                    robot._gunHeading += 1
                     self.drawRobot(robot)
                 clock.tick(60)
         except Exception as e:

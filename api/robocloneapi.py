@@ -1,3 +1,5 @@
+from tkinter import Canvas
+
 class AdvancedRobot:
     def __init__(self):
         self._x: int = 50
@@ -7,6 +9,7 @@ class AdvancedRobot:
         self._radarHeading: int = 0
 
         # Drawing stuff
+        self._myID: int = None
         self._images: list = [None, None, None]
         self._partIDS: list[int] = []
 
@@ -43,3 +46,7 @@ class AdvancedRobot:
             self._lastGunHeading = self._gunHeading
             self._lastRadarHeading = self._radarHeading
         return result
+    
+    def unregister(self, canvas: Canvas) -> None:
+        for part in self._partIDS:
+            canvas.delete(part)
