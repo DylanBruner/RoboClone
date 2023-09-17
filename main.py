@@ -1,3 +1,6 @@
-from security.secureloader import SecureLoader
+import threading
+from ui.mainwindow import MainWindow
 
-SecureLoader.loadRobot("data/robots/testrobot.py")
+threading.Thread.daemon = True # make all threads daemons by default
+
+win = MainWindow()
