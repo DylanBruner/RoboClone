@@ -2,7 +2,7 @@ import random, threading
 from PIL import Image, ImageTk
 from tkinter import Canvas
 from api.robocloneapi import AdvancedRobot
-from ui.battlefield import BattleField
+from ui.battle.battlefield import BattleField
 from pygame.time import Clock
 from helper.garbagefix import GarbageFix
 

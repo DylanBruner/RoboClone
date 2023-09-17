@@ -1,7 +1,7 @@
-import time, os
 import tkinter as tk
-from ui.battleview import BattleView
-from ui.battlefield import BattleField
+from ui.battle.battlefield import BattleField
+from ui.battle.battleview import BattleView
+from ui.battlecreator import BattleCreator, Robot, RobotPackage
 
 """
 Sizes
@@ -121,7 +121,13 @@ class MainWindow:
 
         self.root.config(menu=menubar)
 
-    def newBattle(self) -> None: print(self.root.winfo_width(), self.root.winfo_height())
+    def newBattle(self) -> None:
+        BattleCreator(tk.Toplevel(self.root)).populate_robot_data([
+            RobotPackage("Package 1", [Robot("Robot 1", "file1"), Robot("Robot 2", "file2")]),
+            RobotPackage("Package 2", [Robot("Robot 3", "file3"), Robot("Robot 4", "file4")]),
+            RobotPackage("Package 3", [Robot("Robot 5", "file5"), Robot("Robot 6", "file6")]),
+        ])
+
     def openBattle(self) -> None: ...
     def saveBattle(self) -> None: ...
     def saveBattleAs(self) -> None: ...
