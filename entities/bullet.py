@@ -9,6 +9,7 @@ class Bullet:
         self._power = power
         self._heading = heading
         self._velocity = 20 - 3 * power
+        self._color = "red"
     
     def _step(self, time_delta: float) -> None:
         # Calculate the change in position using velocity and heading based on the time passed

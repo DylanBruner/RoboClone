@@ -22,8 +22,6 @@ class BattleView:
         self.idleImageID   = self.CANVAS.create_image(0, 0, image=self.idleImage, anchor="nw")
 
         self.running = True
-        # self.mainThread = StoppableThread(target=self.mainloop)
-        # self.mainThread.start()
         self.mainThread = threading.Thread(target=self.mainloop)
         self.mainThread.daemon = True
         self.mainThread.start()
