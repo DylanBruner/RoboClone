@@ -1,21 +1,5 @@
-import inspect, traceback
+import inspect
 from typing import Any
-
-"""
-TODO: Fix these issues:
- - re-write this whole class with what i now know
-"""
-
-import inspect, hashlib
-from typing import Any
-
-"""
-Some notes
- - You must be inside a class to access protected methods of another class or the same class
- - Variable access
-  - if the variable is prefixed with "l_" it may only be accessed by the class it is defined in,
-    - This may not be bypassed via ProtectedClass.l_bypassClasses
-"""
 
 class SecurityManagerMeta(type):
     def __setattr__(self, __name: str, __value: Any) -> None:
