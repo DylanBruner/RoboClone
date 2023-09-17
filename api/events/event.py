@@ -1,6 +1,6 @@
 import math
 from entities.bullet import Bullet
-from api.events.robotstatus import RobotStatus
+from api.events.robotinfo import RobotStatus, BattleResults
 
 class Event(object):
     def __init__(self):
@@ -8,7 +8,7 @@ class Event(object):
 
     def getTime(self) -> float: return self._time
 
-class RobotScannedEvent(Event):
+class ScannedRobotEvent(Event):
     def __init__(self, name: str, energy: float, bearing: float, heading: float, velocity: float, isSentryRobot: bool):
         self._name: str = name
         self._energy: float = energy
@@ -104,3 +104,27 @@ class StatusEvent(Event):
 class WinEvent(Event):
     def __init__(self):
         pass
+
+class RoundEndedEvent(Event):
+    def __init__(self, round: int, turns: int, totalTurns: int):
+        self._round: int = round
+        self._turns: int = turns
+        self._totalTurns: int = totalTurns
+    
+    def getRound(self) -> int: return self._round
+    def getTurns(self) -> int: return self._turns
+    def getTotalTurns(self) -> int: return self._totalTurns
+
+class SkippedTurnEvent(Event):
+    def __init__(self, skippedTurn: int):
+        self._skippedTurn: int = skippedTurn
+    
+    def getSkippedTurn(self) -> int: return self._skippedTurn
+
+class BattleEndedEvent(Event):
+    def __init__(self, aborted: bool, results: BattleResults):
+        self._aborted: bool = aborted
+        self._results: BattleResults = results
+
+    def isAborted(self) -> bool: return self._aborted
+    def getResults(self) -> BattleResults: return self._results

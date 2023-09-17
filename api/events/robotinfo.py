@@ -46,3 +46,32 @@ class RobotStatus(object):
     def getDistance(self) -> float: ...
     def getGunCoolingRate(self) -> float: ...
     def getGunHeat(self) -> float: ...
+
+class BattleResults:
+    def __init__(self, teamLeaderName: str, rank: int, score: float, survival: float, lastSurvivorBonus: float, bulletDamage: float, 
+                 bulletDamageBonus: float, ramDamage: float, ramDamageBonus: float, firsts: int, seconds: int, thirds: int):
+        self._teamLeaderName: str = teamLeaderName
+        self._rank: int = rank
+        self._score: float = score
+        self._survival: float = survival
+        self._lastSurvivorBonus: float = lastSurvivorBonus
+        self._bulletDamage: float = bulletDamage
+        self._bulletDamageBonus: float = bulletDamageBonus
+        self._ramDamage: float = ramDamage
+        self._ramDamageBonus: float = ramDamageBonus
+        self._firsts: int = firsts
+        self._seconds: int = seconds
+        self._thirds: int = thirds
+    
+    def getBulletDamage(self) -> float: return self._bulletDamage
+    def getBulletDamageBonus(self) -> float: return self._bulletDamageBonus
+    def getFirsts(self) -> int: return self._firsts
+    def getLastSurvivorBonus(self) -> float: return self._lastSurvivorBonus
+    def getRamDamage(self) -> float: return self._ramDamage
+    def getRamDamageBonus(self) -> float: return self._ramDamageBonus
+    def getRank(self) -> int: return self._rank
+    def getScore(self) -> float: return self._score
+    def getSeconds(self) -> int: return self._seconds
+    def getSurvival(self) -> float: return self._survival
+    def getTeamLeaderName(self) -> str: return self._teamLeaderName
+    def getThirds(self) -> int: return self._thirds
