@@ -3,6 +3,7 @@ from api.robocloneapi import AdvancedRobot
 from entities.bullet import Bullet
 from helper.justimportit import JustImportIt
 from security.secureloader import SecureLoader
+from security.classprotection import SecurityManager
 try: from ui.battlecreator import RobotPackage, Robot
 except ImportError: JustImportIt.resolve(mode=JustImportIt.UNSAFE)
 
@@ -29,7 +30,7 @@ class BattleField:
         self._base_robots = robots
         self._state = 1
         for robot in robots:
-            self._robots.append((robot := SecureLoader.loadRobot(robot.file_location)))
+            self._robots.append((robot := SecureLoader().loadRobot(robot.file_location)))
             robot._x = random.randint(60, self._width - 60)
             robot._y = random.randint(60, self._height - 60)
             robot._myID = len(self._robots) - 1
@@ -38,7 +39,7 @@ class BattleField:
     def stopBattle(self) -> None:
         self._state = 0
         for robot in self._robots:
-            robot.unregister(self.CANVAS)
+            robot._unregister(self.CANVAS)
         self._bullets = []
 
     @classmethod

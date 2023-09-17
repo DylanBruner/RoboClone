@@ -5,6 +5,7 @@ from api.robocloneapi import AdvancedRobot
 from ui.battle.battlefield import BattleField
 from pygame.time import Clock
 from helper.garbagefix import GarbageFix
+from security.classprotection import SecurityManager
 
 class BattleView:
     IMAGE_DUMP: dict = GarbageFix(5)
@@ -55,7 +56,7 @@ class BattleView:
     # Body, Turret, Radar
     def drawRobot(self, robot: AdvancedRobot) -> None:
         forceRedraw = False
-        if len(robot.getParts()) == 0:
+        if len(robot._getParts()) == 0:
             forceRedraw = True
             x, y = robot.getX(), robot.getY()
 
@@ -81,13 +82,11 @@ class BattleView:
             robot._images[1] = turret_image = turret
             robot._images[2] = radar_image = radar
 
-
-
             self.IMAGE_DUMP[f'body-{robot._myID}'] = ImageTk.PhotoImage(body_image)
             self.IMAGE_DUMP[f'turret-{robot._myID}'] = ImageTk.PhotoImage(turret_image)
             self.IMAGE_DUMP[f'radar-{robot._myID}'] = ImageTk.PhotoImage(radar_image)
 
-            robot.setParts(
+            robot._setParts(
                 [
                     self.CANVAS.create_image(x, y, image=self.IMAGE_DUMP[f'body-{robot._myID}'], anchor="nw"),
                     self.CANVAS.create_image(x, y, image=self.IMAGE_DUMP[f'turret-{robot._myID}'], anchor="nw"),
@@ -95,7 +94,7 @@ class BattleView:
                 ]
             )
 
-        if robot.hasChanged() or forceRedraw:
+        if robot._hasChanged() or forceRedraw:
             x, y = robot.getX(), robot.getY()
 
             self.IMAGE_DUMP[f'body-{robot._myID}'] = ImageTk.PhotoImage(i1 := robot._images[0].rotate(robot.getRobotHeading()))
@@ -103,13 +102,13 @@ class BattleView:
             self.IMAGE_DUMP[f'radar-{robot._myID}'] = ImageTk.PhotoImage(i3 := robot._images[2].rotate(robot.getRadarHeading()))
 
             # update the images
-            self.CANVAS.itemconfig(robot.getParts()[0], image=self.IMAGE_DUMP[f'body-{robot._myID}'])
-            self.CANVAS.itemconfig(robot.getParts()[1], image=self.IMAGE_DUMP[f'turret-{robot._myID}'])
-            self.CANVAS.itemconfig(robot.getParts()[2], image=self.IMAGE_DUMP[f'radar-{robot._myID}'])
+            self.CANVAS.itemconfig(robot._getParts()[0], image=self.IMAGE_DUMP[f'body-{robot._myID}'])
+            self.CANVAS.itemconfig(robot._getParts()[1], image=self.IMAGE_DUMP[f'turret-{robot._myID}'])
+            self.CANVAS.itemconfig(robot._getParts()[2], image=self.IMAGE_DUMP[f'radar-{robot._myID}'])
 
             # move all the parts to be centered on the robot
             i = 0
-            for part in robot.getParts():
+            for part in robot._getParts():
                 height, width = robot._images[i].height, robot._images[i].width
                 self.CANVAS.coords(part, x - width / 2, y - height / 2)
                 i += 1
@@ -128,7 +127,6 @@ class BattleView:
                     elif lastState == 0:
                         self.CANVAS.itemconfig(self.idleImageID, state="normal")
                         self.CANVAS.itemconfig(self.groundImageID, state="hidden")
-
 
                 for robot in self.battleField.getRobots():
                     self.drawRobot(robot)

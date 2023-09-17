@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from ui.battle.battlefield import BattleField
-
+from security.classprotection import SecurityManager
 
 class Robot:
     def __init__(self, robot_name: str, file_location: str):
@@ -58,7 +58,6 @@ class BattleCreator:
             self.robots_list.delete(0, tk.END)
 
             if self.robots_package_data is None: raise Exception("No robots package data loaded")
-            print(selected_package)
             for package in self.robots_package_data:
                 if package.package_name == selected_package:
                     for robot in package.robots:
