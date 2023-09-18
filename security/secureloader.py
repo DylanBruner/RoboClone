@@ -26,13 +26,7 @@ class SecureLoader:
         loader = importlib.machinery.SourceFileLoader("robot", filename)
         module = loader.load_module()
 
-        # Find the robot class
-        robotClass = None
-        for name, obj in module.__dict__.items():
-            if isinstance(obj, type) and issubclass(obj, AdvancedRobot):
-                robotClass = obj
-                # print("Found robot class: " + name)
-                break
+        robotClass = (EXPORT := getattr(module, "EXPORT", None)) and EXPORT[0] or None
         
         if robotClass:
             # robotClass = type(robotClass.__name__, (robotClass,), {})

@@ -1,4 +1,4 @@
-import random
+import random, threading
 from api.robocloneapi import AdvancedRobot
 from entities.bullet import Bullet
 from helper.justimportit import JustImportIt
@@ -33,6 +33,10 @@ class BattleField:
             robot._x = random.randint(60, self._width - 60)
             robot._y = random.randint(60, self._height - 60)
             robot._myID = len(self._robots) - 1
+        
+        for robot in self._robots:
+            print("Starting run thread")
+            threading.Thread(target=robot.run).start()
     
     @classmethod
     def stopBattle(self) -> None:

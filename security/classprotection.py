@@ -104,8 +104,8 @@ class ProtectedClass(object, metaclass=ProtectedClassMeta):
     # Variable protection internals ===============================================
     def __getattribute__(self, __name: str) -> Any:
         if inspect.currentframe().f_back.f_code.co_filename == __file__: return super().__getattribute__(__name)
-        # get the callers file
-        if inspect.getfile(self.__class__) != inspect.currentframe().f_back.f_code.co_filename:
+        # external access                                                                               - bandaid fix for the fact that the class is recompiled causing it's src to change
+        if inspect.getfile(self.__class__) != (file := inspect.currentframe().f_back.f_code.co_filename) and not 'data/robots' in file:
             return super().__getattribute__(__name)
 
         allowed = False

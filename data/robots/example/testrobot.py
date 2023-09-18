@@ -4,7 +4,10 @@ from api.robocloneapi import AdvancedRobot
 class robot(AdvancedRobot):
     def run(self):
         while True:
-            self.setAhead(50)
-            while self.getDistanceRemaining() > 0:
-                time.sleep(0.1)
-            self.setBack(50)
+            self.ahead(100)
+            self.turnGunRight(360)
+            self.back(100)
+            self.turnGunRight(360)
+            time.sleep(1)
+
+EXPORT = [robot]

@@ -57,7 +57,7 @@ class BattleView:
         forceRedraw = False
         if len(robot._getParts()) == 0:
             forceRedraw = True
-            x, y = robot.getX(), robot.getY()
+            x, y = robot._x, robot._y
 
             robot._images[0] = body_image = Image.open("images/robot/body.png")
             robot._images[1] = turret_image = Image.open("images/robot/turret.png")
@@ -85,7 +85,7 @@ class BattleView:
             self.IMAGE_DUMP[f'turret-{robot._myID}'] = ImageTk.PhotoImage(turret_image)
             self.IMAGE_DUMP[f'radar-{robot._myID}'] = ImageTk.PhotoImage(radar_image)
 
-            robot._setParts(
+            robot._setParts(test :=
                 [
                     self.CANVAS.create_image(x, y, image=self.IMAGE_DUMP[f'body-{robot._myID}'], anchor="nw"),
                     self.CANVAS.create_image(x, y, image=self.IMAGE_DUMP[f'turret-{robot._myID}'], anchor="nw"),
@@ -94,11 +94,11 @@ class BattleView:
             )
 
         if robot._hasChanged() or forceRedraw:
-            x, y = robot.getX(), robot.getY()
+            x, y = robot._x, robot._y
 
-            self.IMAGE_DUMP[f'body-{robot._myID}'] = ImageTk.PhotoImage(i1 := robot._images[0].rotate(robot.getRobotHeading()))
-            self.IMAGE_DUMP[f'turret-{robot._myID}'] = ImageTk.PhotoImage(i2 := robot._images[1].rotate(robot.getGunHeading()))
-            self.IMAGE_DUMP[f'radar-{robot._myID}'] = ImageTk.PhotoImage(i3 := robot._images[2].rotate(robot.getRadarHeading()))
+            self.IMAGE_DUMP[f'body-{robot._myID}'] = ImageTk.PhotoImage(i1 := robot._images[0].rotate(robot._robotHeading))
+            self.IMAGE_DUMP[f'turret-{robot._myID}'] = ImageTk.PhotoImage(i2 := robot._images[1].rotate(robot._gunHeading))
+            self.IMAGE_DUMP[f'radar-{robot._myID}'] = ImageTk.PhotoImage(i3 := robot._images[2].rotate(robot._radarHeading))
 
             # update the images
             self.CANVAS.itemconfig(robot._getParts()[0], image=self.IMAGE_DUMP[f'body-{robot._myID}'])
