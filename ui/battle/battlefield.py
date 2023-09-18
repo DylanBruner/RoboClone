@@ -3,7 +3,6 @@ from api.robocloneapi import AdvancedRobot
 from entities.bullet import Bullet
 from helper.justimportit import JustImportIt
 from security.secureloader import SecureLoader
-from security.classprotection import SecurityManager
 try: from ui.battlecreator import RobotPackage, Robot
 except ImportError: JustImportIt.resolve(mode=JustImportIt.UNSAFE)
 

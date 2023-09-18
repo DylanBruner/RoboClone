@@ -1,5 +1,4 @@
 import importlib.machinery
-from security.classprotection import SecurityManager
 from api.robocloneapi import AdvancedRobot
 
 class SecureLoader:

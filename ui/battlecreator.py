@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from ui.battle.battlefield import BattleField
-from security.classprotection import SecurityManager
 
 class Robot:
     def __init__(self, robot_name: str, file_location: str):

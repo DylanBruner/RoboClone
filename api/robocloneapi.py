@@ -1,10 +1,24 @@
 from io import TextIOWrapper
-import math
 from api.events.event import *
+from security.classprotection import ProtectedClass, PermissionTree
 
-class AdvancedRobot():
+class AdvancedRobot(ProtectedClass):
     def __init__(self):
-        ...
+        super().__init__()
+        """
+        Apply base permissions to the class,
+         - All functions should be read only (callable)
+         - All other vairables should be completly hidden
+         NOTE: Anything created post-mapCurrent will not be affected by this (which is good, we dont want to mess with user defined stuff)
+        """
+        self._mapCurrent(PermissionTree().setPermissionForType(lambda a: callable(a), {'read': True, 'write': False, 'delete': False, 'override': True}))
+        self._mapCurrent(PermissionTree().setPermissionForType(lambda x: True, {'read': False, 'write': True, 'delete': True, 'override': False}))
+        self._enableSecurity()
+
+    # Below this is all of the private data that the use can not directly obtain ================================================================================
+
+
+    # Below this is all of the functions that the user can call =================================================================================================
 
     # Setters ==================================================================
     def ahead(self, distance: float) -> None: ...
@@ -31,6 +45,7 @@ class AdvancedRobot():
     def turnRadarLeft(self, degrees: float) -> None: ...
     def turnRadarRight(self, degrees: float) -> None: ...
     def turnRight(self, degrees: float) -> None: ...
+    a = ""
     def execute(self) -> None: ...
     def setTurnLeft(self, degrees: float) -> None: ...
     def setTurnRight(self, degrees: float) -> None: ...

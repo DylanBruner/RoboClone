@@ -5,7 +5,6 @@ from api.robocloneapi import AdvancedRobot
 from ui.battle.battlefield import BattleField
 from pygame.time import Clock
 from helper.garbagefix import GarbageFix
-from security.classprotection import SecurityManager
 
 class BattleView:
     IMAGE_DUMP: dict = GarbageFix(5)

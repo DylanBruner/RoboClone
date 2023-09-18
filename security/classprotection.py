@@ -1,173 +1,172 @@
+
 import inspect
 from typing import Any
 
 """
-TODO
-    - Re-write this whole class again...
+Adding security to this class would theoretically only limit access via outside classes (i think... maybe... idk)
 """
-
-class SecurityManagerMeta(type):
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__:
-            return super().__setattr__(__name, __value)
-        raise AttributeError(f"Cannot set attribute {__name} on class {self.__name__} (class)")
-    
-    def __delattr__(self, __name: str) -> None:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__:
-            return super().__delattr__(__name)
-        raise AttributeError(f"Cannot delete attribute {__name} on class {self.__name__} (class)")
-    
-    def __getattribute__(self, __name: str) -> Any:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__:
-            return super().__getattribute__(__name)
-        if __name.startswith('_'): raise AttributeError(f"Cannot access attribute {__name} on class {self.__name__} (class)")
-        return super().__getattribute__(__name)
-    
-class SecurityManager(object, metaclass=SecurityManagerMeta):
-    _bypassClasses: list[type] = [] # Classes that can bypass the security manager
-    _enabled: bool = False # Whether or not the security manager is enabled
-
-    @classmethod
-    def enable(cls) -> None:
-        cls._enabled = True
-    
-    @classmethod
-    def isEnabled(cls) -> bool:
-        return cls._enabled
-    
-    @classmethod
-    def addBypass(cls, bypass: type) -> None:
-        if cls._enabled: raise RuntimeError("Cannot add bypass class after security manager is enabled")
-        print(f"Added bypass class {bypass.__name__}")
-        cls._bypassClasses.append(bypass)
-    
-    @classmethod
-    def setRaw(cls, target: object, name: str, value: str) -> None:
-        # get the caller class
-        caller_class = None
-        frame = inspect.currentframe()
-        while frame:
-            # Check if 'self' exists in the local variables of the frame
-            if 'self' in frame.f_locals:
-                caller_class = frame.f_locals['self'].__class__
-                break
-            frame = frame.f_back
-        print(caller_class, cls._bypassClasses)
-
 class ProtectedClassMeta(type):
-    def __setattr__(cls, __name: str, __value: Any) -> None:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__: # prevent recursion
-            return super().__setattr__(__name, __value)
-        
-        if __name.startswith('_'):
-            caller_class = None
-            frame = inspect.currentframe()
-            while frame:
-                # Check if 'self' exists in the local variables of the frame
-                if 'self' in frame.f_locals:
-                    caller_class = frame.f_locals['self'].__class__
-                    break
-                frame = frame.f_back  # Move to the previous frame
-            
-            if caller_class not in SecurityManager._bypassClasses and caller_class != cls:
-                raise AttributeError(f"Cannot set protected variable {__name} on class {cls.__name__} (class)")
-        return super().__setattr__(__name, __value)
-
-    def __delattr__(cls, __name: str) -> None:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__: # prevent recursion
-            return super().__delattr__(__name)
-        
-        if __name.startswith('_'):
-            caller_class = None
-            frame = inspect.currentframe()
-            while frame:
-                # Check if 'self' exists in the local variables of the frame
-                if 'self' in frame.f_locals:
-                    caller_class = frame.f_locals['self'].__class__
-                    break
-                frame = frame.f_back
-            if caller_class not in SecurityManager._bypassClasses and caller_class != cls:
-                raise AttributeError(f"Cannot delete protected variable {__name} on class {cls.__name__} (class)")
+    def __delattr__(self, __name: str) -> None:
         return super().__delattr__(__name)
-    
-    def __getattribute__(cls, __name: str) -> Any:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__: # prevent recursion
-            return super().__getattribute__(__name)
-        
-        if __name.startswith('_'):
-            caller_class = None
-            frame = inspect.currentframe()
-            while frame:
-                # Check if 'self' exists in the local variables of the frame
-                if 'self' in frame.f_locals:
-                    caller_class = frame.f_locals['self'].__class__
-                    break
-                frame = frame.f_back
-            if caller_class not in SecurityManager._bypassClasses and caller_class != cls:
-                print(SecurityManager._bypassClasses, caller_class, cls)
-                raise AttributeError(f"Cannot access protected variable {__name} on class {cls.__name__} (class)")
+
+    def __getattribute__(self, __name: str) -> Any:
         return super().__getattribute__(__name)
 
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        return super().__setattr__(__name, __value)
 
 class ProtectedClass(object, metaclass=ProtectedClassMeta):
-    _readOnlyVariables: dict[str, list[str]] = {} # {class: [variables]}
-
     def __init__(self):
-        ...
+        self.p_attribute_data = {
+            "enabled": False,
+            "security_overrides": [],
+            "attributes": {
+                "_enableSecurity": {
+                    "read": True,    # Allows the function to be read aka called
+                    "write": False,  # Prevents the function from being overwritten
+                    "delete": False, # Prevents the function from being deleted
+                    "override": True # Gives the function permission to bypass security
+                },
+                "p_attribute_data": {
+                    "read": False,
+                    "write": False,
+                    "delete": False,
+                }
+            }
+        }
 
-    # function decorator that makes it read only
-    @classmethod
-    def readOnly(self, func: Any) -> Any:
-        # get the class the function is in
-        class_name = func.__qualname__.split(".")[0]
-        func_name  = func.__qualname__.split(".")[1]
-
-        self._readOnlyVariables.setdefault(class_name, []).append(func_name)
-        return func
-
-
-    # Instance variable protection =================================================
-    def __getattribute__(self, __name: str) -> Any:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__ or not SecurityManager.isEnabled():
-            return super().__getattribute__(__name)
-        if __name.startswith('l_'): raise AttributeError(f"Cannot access local variable {__name} (instance)")
-
-        if __name.startswith('_'):
-            caller_class = getattr(inspect.currentframe().f_back.f_back.f_locals.get("self", None), '__class__', None)
-            print(caller_class, SecurityManager._bypassClasses)
-            if caller_class not in SecurityManager._bypassClasses:
-                raise AttributeError(f"Cannot access protected method {__name} (instance)")
-
-        return super().__getattribute__(__name)
+    # Secure access stuffs ========================================================
+    def _enableSecurity(self) -> None:
+        self.p_attribute_data["enabled"] = True
     
-    def __setattr__(self, __name: str, __value: Any) -> None:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__ or not SecurityManager.isEnabled():
-            return super().__setattr__(__name, __value)
-        if __name.startswith('l_'): raise AttributeError(f"Cannot set local variable {__name} (instance)")
+    """
+    Add a security override to the class
+    """
+    def _addSecurityOverride(self, func: str) -> None:
+        if self.p_attribute_data["enabled"]: raise RuntimeError("Cannot add security override after security is enabled")
+        if (attribute := self.p_attribute_data["attributes"].get(func, None)) is not None:
+            attribute["override"] = True
+        else:
+            self.p_attribute_data["attributes"][func] = {
+                "read": True,
+                "write": True,
+                "delete": True,
+                "override": True
+            }
+    
+    """
+    Modify the permissions of an attribute
+    """
+    def _setPermission(self, attribute: str, data: dict) -> None:
+        # if we aren't enabled or the caller is in the bypass list, allow it
+        func_name = inspect.currentframe().f_back.f_code.co_name
+        if ((attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None and attribute.get("override", False)) or not self.p_attribute_data["enabled"]:
+            self.p_attribute_data["attributes"][attribute].update(data)
+        else: raise PermissionError(f"Cannot set permission for attribute {attribute} on class {self.__class__.__name__} (class)")
+    
+    def _setPermissions(self, attributes: list[str], data: dict) -> None:
+        func_name = inspect.currentframe().f_back.f_code.co_name
+        if ((attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None and attribute.get("override", False)) or not self.p_attribute_data["enabled"]:
+            for attribute in attributes:
+                self.p_attribute_data["attributes"][attribute].update(data)
+        else: raise PermissionError(f"Cannot set permissions for attributes {attributes} on class {self.__class__.__name__} (class)")
 
-        # check if the variable is read only
-        if __name in self._readOnlyVariables.get(self.__class__.__name__, []): raise AttributeError(f"Cannot set read-only variable {__name} (instance)")
+    """
+    Automatically set permissions for all attributes within a class
+    """
+    def _mapCurrent(self, permission_tree: 'PermissionTree') -> None:
+        func_name = inspect.currentframe().f_back.f_code.co_name
+        if ((attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None and attribute.get("override", False)) or not self.p_attribute_data["enabled"]:
+            
+            for thing in dir(self):
+                if thing.startswith('_'): continue # ignore the builtins, anything nammed with _ by the user will need to be manually set
+                if (attribute := self.p_attribute_data["attributes"].get(thing, None)) is not None: continue # ignore anything that's already been set
+                thing_name = str(thing)
+                thing = getattr(self, thing)
 
-        if __name.startswith('_'):
-            # caller_class = getattr(inspect.currentframe().f_back.f_locals.get("self", None), "__class__", None)
-            caller_class = getattr(inspect.currentframe().f_back.f_back.f_locals.get("self", None), '__class__', None)
-            if caller_class not in SecurityManager._bypassClasses:
-                raise AttributeError(f"Cannot set protected method {__name} (instance)")
+                for _type, permission in permission_tree._tree.items():
+                    try:
+                        if _type(thing):
+                            self.p_attribute_data["attributes"][thing_name] = permission
+                            break
+                    except Exception as e:
+                        print("Error while applying filter to attribute", thing_name, ":", e)
+
+        else: 
+            raise PermissionError(f"Cannot map current permissions on class {self.__class__.__name__} (class)")
+
+    # Variable protection internals ===============================================
+    def __getattribute__(self, __name: str) -> Any:
+        if inspect.currentframe().f_back.f_code.co_filename == __file__: return super().__getattribute__(__name)
+        # get the callers file
+        if inspect.getfile(self.__class__) != inspect.currentframe().f_back.f_code.co_filename:
+            return super().__getattribute__(__name)
+
+        allowed = False
+
+        if (attribute := self.p_attribute_data["attributes"].get(__name, None)) is not None:
+            allowed = attribute["read"]
         
-        return super().__setattr__(__name, __value)
+        # get the function that attempted to get the attribute
+        func_name = inspect.currentframe().f_back.f_code.co_name
+        if func_name == '<module>': raise PermissionError(f"Cannot get attribute {__name} on class {self.__class__.__name__} from outside a class")
+        if (attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None:
+            allowed = attribute.get("override", False) or allowed # if it's allowed via r/w/d flags, or if it's allowed via override, allow it
+        
+        if allowed or not self.p_attribute_data["enabled"]:
+            return super().__getattribute__(__name)
+        raise PermissionError(f"Cannot get attribute {__name} on class {self.__class__.__name__} (class)")
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        if inspect.currentframe().f_back.f_code.co_filename == __file__: return super().__setattr__(__name, __value)
+        # get the callers file
+        if inspect.getfile(self.__class__) != inspect.currentframe().f_back.f_code.co_filename:
+            return super().__setattr__(__name, __value)
+
+        allowed = False
+
+        if (attribute := self.p_attribute_data["attributes"].get(__name, None)) is not None:
+            allowed = attribute["write"]
+        
+        # get the function that attempted to set the attribute
+        func_name = inspect.currentframe().f_back.f_code.co_name
+        if func_name == '<module>': raise PermissionError(f"Cannot set attribute {__name} on class {self.__class__.__name__} from outside a class")
+        if (attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None:
+            allowed = attribute.get("override", False) or allowed
+        
+        if allowed or not self.p_attribute_data["enabled"]:
+            return super().__setattr__(__name, __value)
+        raise PermissionError(f"Cannot set attribute {__name} on class {self.__class__.__name__} (class)")
     
     def __delattr__(self, __name: str) -> None:
-        if inspect.currentframe().f_back.f_code.co_filename == __file__ or not SecurityManager.isEnabled():
+        if inspect.currentframe().f_back.f_code.co_filename == __file__: return super().__delattr__(__name)
+        # get the callers file
+        if inspect.getfile(self.__class__) != inspect.currentframe().f_back.f_code.co_filename:
             return super().__delattr__(__name)
-        if __name.startswith('l_'): raise AttributeError(f"Cannot delete local variable {__name} (instance)")
-        if __name in self._readOnlyVariables: raise AttributeError(f"Cannot delete read-only variable {__name} (instance)")
-
-        # check if the variable is read only
-        if __name in self._readOnlyVariables.get(self.__class__.__name__, []): raise AttributeError(f"Cannot delete read-only variable {__name} (instance)")
-
-        if __name.startswith('_'):
-            caller_class = getattr(inspect.currentframe().f_back.f_back.f_locals.get("self", None), '__class__', None)
-            if caller_class not in SecurityManager._bypassClasses and caller_class != self.__class__:
-                raise AttributeError(f"Cannot delete protected method {__name} (instance)")
         
-        return super().__delattr__(__name) # Fails when trying to delete a class variable
+        allowed = False
+
+        if (attribute := self.p_attribute_data["attributes"].get(__name, None)) is not None:
+            allowed = attribute["delete"]
+
+        # get the function that attempted to delete the attribute
+        func_name = inspect.currentframe().f_back.f_code.co_name
+        if func_name == '<module>': raise PermissionError(f"Cannot delete attribute {__name} on class {self.__class__.__name__} from outside a class")
+        if (attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None:
+            allowed = attribute.get("override", False) or allowed
+
+        if allowed or not self.p_attribute_data["enabled"]:
+            return super().__delattr__(__name)
+        raise PermissionError(f"Cannot delete attribute {__name} on class {self.__class__.__name__} (class)")
+    
+
+class PermissionTree:
+    def __init__(self):
+        self._tree: dict[callable, dict[str, bool]] = {}
+    
+    """
+    Returns self to allow for chaining
+    """
+    def setPermissionForType(self, filter: callable, permission: dict[str, bool]) -> 'PermissionTree':
+        self._tree[filter] = permission
+        return self
