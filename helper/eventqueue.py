@@ -12,7 +12,6 @@ class EventQueue:
         self._events.append(event)
     
     def register(self, consumer_func: callable, event: Event) -> None:
-        print("Registering", consumer_func, "for", event.__class__)
         self._consumers.setdefault(event.__class__, []).append(consumer_func)
 
     def _run(self) -> None:

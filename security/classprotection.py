@@ -57,19 +57,25 @@ class ProtectedClass(object, metaclass=ProtectedClassMeta):
     """
     Modify the permissions of an attribute
     """
-    def _setPermission(self, attribute: str, data: dict) -> None:
+    def _setPermission(self, _attribute: str, data: dict) -> None:
         # if we aren't enabled or the caller is in the bypass list, allow it
         func_name = inspect.currentframe().f_back.f_code.co_name
         if ((attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None and attribute.get("override", False)) or not self.p_attribute_data["enabled"]:
-            self.p_attribute_data["attributes"][attribute].update(data)
-        else: raise PermissionError(f"Cannot set permission for attribute {attribute} on class {self.__class__.__name__} (class)")
+            if self.p_attribute_data["attributes"].get(_attribute, None) is None:
+                self.p_attribute_data["attributes"][attribute] = data
+            else:
+                self.p_attribute_data["attributes"][_attribute].update(data)
+        else: raise PermissionError(f"Cannot set permission for attribute {_attribute} on class {self.__class__.__name__} (class)")
     
-    def _setPermissions(self, attributes: list[str], data: dict) -> None:
+    def _setPermissions(self, _attributes: list[str], data: dict) -> None:
         func_name = inspect.currentframe().f_back.f_code.co_name
         if ((attribute := self.p_attribute_data["attributes"].get(func_name, None)) is not None and attribute.get("override", False)) or not self.p_attribute_data["enabled"]:
-            for attribute in attributes:
-                self.p_attribute_data["attributes"][attribute].update(data)
-        else: raise PermissionError(f"Cannot set permissions for attributes {attributes} on class {self.__class__.__name__} (class)")
+            for attribute in _attributes:
+                if self.p_attribute_data["attributes"].get(_attributes, None) is None:
+                    self.p_attribute_data["attributes"][_attributes] = data
+                else:
+                    self.p_attribute_data["attributes"][_attributes].update(data)
+        else: raise PermissionError(f"Cannot set permissions for attributes {_attributes} on class {self.__class__.__name__} (class)")
 
     """
     Automatically set permissions for all attributes within a class

@@ -1,22 +1,100 @@
 from io import TextIOWrapper
 from api.events.event import *
 from security.classprotection import ProtectedClass, PermissionTree
+from helper.eventqueue import EventQueue
+from tkinter import Canvas
+
 
 class AdvancedRobot(ProtectedClass):
     def __init__(self):
         super().__init__()
+
+    # (yes, this indentation is correct)
+    # Below this is all of the private data that the use can not directly obtain ================================================================================
+        self._eventQueue = EventQueue()
+
+
+        # Drawing stuff
+        self._myID = None
+        self._images = [None, None, None]
+        self._partIDS = []
+
+        # Current Info
+        self._energy = 100
+        self._x = -1
+        self._y = -1
+        self._robotHeading = -1
+        self._gunHeading = -1
+        self._radarHeading = -1
+
+        # Target Info
+        self._robotHeadingTarget = 0
+        self._gunHeadingTarget = 0
+        self._radarHeadingTarget = 0
+        self._robotMoveTarget = 0
+        self._movementStopped = False
+
+        # Shooting
+        self._firePower = 0
+        self._gunHeat = 0
+
+        self._registerEvents()
+
+    # Permissions ======================================================================================================
         """
+        The permmission 'override' allows the code within the function to do whatever it wants,
+        it does not allow the user to override the function itself.
+
         Apply base permissions to the class,
-         - All functions should be read only (callable)
-         - All other vairables should be completly hidden
+         - All functions should be read only (callable-only)
+         - All other variables should be completly hidden
          NOTE: Anything created post-mapCurrent will not be affected by this (which is good, we dont want to mess with user defined stuff)
         """
         self._mapCurrent(PermissionTree().setPermissionForType(lambda a: callable(a), {'read': True, 'write': False, 'delete': False, 'override': True}))
         self._mapCurrent(PermissionTree().setPermissionForType(lambda x: True, {'read': False, 'write': True, 'delete': True, 'override': False}))
-        self._enableSecurity()
 
-    # Below this is all of the private data that the use can not directly obtain ================================================================================
+        # More specific permissions
+        for func in dir(self):
+            if func.startswith('_') and not func.startswith('__') and callable(getattr(self, func)) and not func == '_init__':
+                self._setPermission(func, {'read': False, 'write': False, 'delete': False, 'override': True})
 
+
+        self._enableSecurity() # Turn on security
+        # self._init__() # Call the user defined init function, (no that's not a typo, it's a hack to initialize 
+                       #                                       the security stuff before the user can run code)
+
+    def _registerEvents(self):
+        self._eventQueue.register(self.onScannedRobot, ScannedRobotEvent)
+        self._eventQueue.register(self.onHitByBullet, HitByBulletEvent)
+        self._eventQueue.register(self.onBulletHit, BulletHitEvent)
+        self._eventQueue.register(self.onBulletHitBullet, BulletHitBulletEvent)
+        self._eventQueue.register(self.onBulletMissed, BulletMissedEvent)
+        self._eventQueue.register(self.onHitRobot, HitRobotEvent)
+        self._eventQueue.register(self.onHitWall, HitWallEvent)
+        self._eventQueue.register(self.onRobotDeath, RobotDeathEvent)
+        self._eventQueue.register(self.onDeath, DeathEvent)
+        self._eventQueue.register(self.onRoundEnded, RoundEndedEvent)
+        self._eventQueue.register(self.onBattleEnded, BattleEndedEvent)
+        self._eventQueue.register(self.onSkippedTurn, SkippedTurnEvent)
+        self._eventQueue.register(self.onStatus, StatusEvent)
+        self._eventQueue.register(self.onWin, WinEvent)
+        # self._eventQueue.register(self._robot.onPaint, PaintEvent)
+    
+    def _getParts(self) -> list[int]: return self._partIDS
+    def _setParts(self, parts: list[int]) -> None: self._partIDS = parts
+    def _hasChanged(self) -> bool:
+        result = self._lastX != self._x or self._lastY != self._y or self._lastRobotHeading != self._robotHeading or self._lastGunHeading != self._gunHeading or self._lastRadarHeading != self._radarHeading
+        if result:
+            self._lastX = self._x
+            self._lastY = self._y
+            self._lastRobotHeading = self._robotHeading
+            self._lastGunHeading = self._gunHeading
+            self._lastRadarHeading = self._radarHeading
+        return result
+    
+    def _unregister(self, canvas: Canvas) -> None:
+        for part in self._partIDS:
+            canvas.delete(part)
 
     # Below this is all of the functions that the user can call =================================================================================================
 
